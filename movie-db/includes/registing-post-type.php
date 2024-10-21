@@ -6,6 +6,7 @@ class MovieDb_Post_Type {
         add_action( 'init', array( $this, 'register_post_type' ) );
         add_action( 'init', array( $this, 'register_taxonomy' ) );
         add_filter( 'the_content', [$this, 'add_movie_details'] );
+        add_filter( 'the_title', [$this, 'add_movie_titles'] );
     }
 
     public function register_post_type() {
@@ -113,5 +114,16 @@ class MovieDb_Post_Type {
         $info .= "</ul>";
         $content .= $info;
         return $content;
+    }
+    function add_movie_titles( $title ) {
+        $post = get_post(get_the_ID());
+        if ( $post->post_type !== 'movie' ) {
+            return $title;
+        }
+        $year = get_the_term_list( get_the_ID(), 'year', '', ', ', '' );
+        if ( $year) {
+            $title .= ' (' . $year . ')';
+            return $title;
+        }
     }
 }
