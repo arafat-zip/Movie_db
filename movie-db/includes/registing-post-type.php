@@ -82,10 +82,36 @@ class MovieDb_Post_Type {
         register_taxonomy( 'year', 'movie', $args );
     }
     function add_movie_details( $content ) {
-        $genre = get_the_term_list(get_the_id(), 'genre', '', ', ');
-        if ( $genre ) {
-            $content .= '<p>Genre: ' . $genre . '</p>';
+        $post = get_post(get_the_ID());
+        if ( $post->post_type !== 'movie' ) {
+            return $content;
         }
+
+        $genre = get_the_term_list(get_the_id(), 'genre', '', ', ');
+        $actor = get_the_term_list(get_the_id(), 'actor', '', ', ');
+        $director = get_the_term_list(get_the_id(), 'director', '', ', ');
+        $year = get_the_term_list(get_the_id(), 'year', '', ', ');
+        $info = "<ul>";
+        if ( $genre ) {
+            $info .="<li>";
+            $info .= "<strong>Genre: </strong>";
+            $info .= $genre;
+            $info .="</li>";
+        }
+        if ( $actor ) {
+            $info .="<li>";
+            $info .= "<strong>Actors: </strong>";
+            $info .= $actor;
+            $info .="</li>";
+        }
+        if ( $director ) {
+            $info .="<li>";
+            $info .= "<strong>Directors: </strong>";
+            $info .= $director;
+            $info .="</li>";
+        }
+        $info .= "</ul>";
+        $content .= $info;
         return $content;
     }
 }
