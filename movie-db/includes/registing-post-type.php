@@ -156,6 +156,14 @@ class MovieDb_Post_Type {
         if ( ! $post_query->have_posts() ) {
             return $content;
         }
-        return $content;
+
+        $related = '<h2>Related Movies</h2>';
+        $related .= '<ul>';
+        while ( $post_query->have_posts() ) {
+            $post_query->the_post();
+            $related .= '<li><a href="' . get_the_permalink() . '">' . get_the_title() . '</a></li>';
+        }
+        $related .= '</ul>';
+        return $content . $related;
     }
 }
