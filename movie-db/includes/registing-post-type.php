@@ -153,6 +153,9 @@ class MovieDb_Post_Type {
                 ],
             ],
         ] );
+        if ( ! $post_query->have_posts() ) {
+            return $content;
+        }
         return $content;
     }
 }
