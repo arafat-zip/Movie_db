@@ -7,15 +7,18 @@ class MovieDb_Post_Type {
         add_action( 'init', array( $this, 'register_taxonomy' ) );
         add_filter( 'the_content', [$this, 'add_movie_details'] );
         add_filter( 'the_title', [$this, 'add_movie_titles'] );
+        add_filter( 'the_content', [ $this, 'related_movies' ] );
     }
 
     public function register_post_type() {
         $args = [
             'label' => 'Movies',
             'public' => true,
+            'has_archive' => true,
             'labels' => [
                 'name' => 'Movies',
                 'singular_name' => 'Movie',
+                'add_new' => 'Add New Movie',
                 'add_new_item' => 'Add New Movie',
                 'edit_item' => 'Edit Movie',
                 'new_item' => 'New Movie',
@@ -41,7 +44,8 @@ class MovieDb_Post_Type {
                 'singular_name'      => 'Genre',
                 'menu_name'          => 'Genre',
             ],
-            'hierarchical'           => true
+            'hierarchical'           => false,
+            'show_admin_column' => true
         ];
         register_taxonomy( 'genre', 'movie', $args );
 
@@ -54,7 +58,8 @@ class MovieDb_Post_Type {
                 'singular_name' => 'actor',
                 'menu_name'     => 'Genre',
             ],
-            'hierarchical'      => false
+            'hierarchical'      => false,
+            'show_admin_column' => true
         ];
         register_taxonomy( 'actor', 'movie', $args );
 
@@ -66,7 +71,8 @@ class MovieDb_Post_Type {
                 'singular_name' => 'director',
                 'menu_name'     => 'director',
             ],
-            'hierarchical'           => true
+            'hierarchical'           => false,
+            'show_admin_column'      => true
         ];
         register_taxonomy( 'director', 'movie', $args );
 
@@ -78,7 +84,8 @@ class MovieDb_Post_Type {
                 'singular_name' => 'year',
                 'menu_name'     => 'year',
             ],
-            'hierarchical'           => true
+            'hierarchical'           => true,
+            'show_admin_column' => true
         ];
         register_taxonomy( 'year', 'movie', $args );
     }
@@ -117,13 +124,35 @@ class MovieDb_Post_Type {
     }
     function add_movie_titles( $title ) {
         $post = get_post(get_the_ID());
-        if ( $post->post_type !== 'movie' ) {
-            return $title;
+            if (isset( $post) && $post->post_type !== null) {
+                if ( $post->post_type !== 'movie' ) {
+                    return $title;
+                }
+                $year = get_the_terms( $post, 'year' );
+                // print_r( $year );
+                if ( $year) {
+                    $title .= ' (' . $year[0]->name . ')';
+                    return $title;
+                }
+            }
+            
+    }
+    function related_movies( $content ) {
+        $genre = get_the_terms( get_the_ID(), 'genre' );
+        if (! $genre) {
+            return $content;
         }
-        $year = get_the_term_list( get_the_ID(), 'year', '', ', ', '' );
-        if ( $year) {
-            $title .= ' (' . $year . ')';
-            return $title;
-        }
+        $post_query = new WP_Query([
+            'post_type'         => 'movie',
+            'post_not_in'       => [ get_the_ID() ],
+            'tax_query'         => [
+                'relation'      => 'OR',
+                [
+                    'taxonomy'  => 'genre',
+                    'terms'     => wp_list_pluck( $genre, 'term_id' ),
+                ],
+            ],
+        ] );
+        return $content;
     }
 }
